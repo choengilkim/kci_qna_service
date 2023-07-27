@@ -1,8 +1,11 @@
 package com.example.kci;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -79,5 +82,31 @@ public class MainController {
     return IntStream.rangeClosed(1, limit)
         .mapToObj(i -> "%d * %d =%d".formatted(finalDan, i, finalDan*i))
         .collect(Collectors.joining("<br>\n"));
+  }
+
+  @GetMapping("/plus2")
+  @ResponseBody
+  public void showPlus2(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    int a = Integer.parseInt(req.getParameter("a"));
+    int b = Integer.parseInt(req.getParameter("b"));
+
+    resp.getWriter().append(a + b + "");
+  } //서블릿 방식 Springboot방식비교
+/*
+  홍길동 =INFP
+  홍길순 =ENFP
+  임꺽정 =ESFJ
+  본인 =INFJ
+ */
+  @GetMapping("/mbti/{name}")
+  @ResponseBody
+  public String  mbti(@PathVariable String name) {
+    return switch (name) {
+      case "홍길동" -> "INFP";
+      case "홍길순" -> "ENFP";
+      case "임꺽정" -> "ESFJ";
+      case "김청일" -> "INFJ";
+      default -> "모름";
+    }; //이런방식으로 사용가능
   }
 }
