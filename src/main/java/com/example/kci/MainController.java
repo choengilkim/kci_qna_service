@@ -2,6 +2,9 @@ package com.example.kci;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,6 +16,7 @@ import java.util.stream.IntStream;
 public class MainController {
 
   private int increaseNo = -1;
+
   @RequestMapping("/kci")
   @ResponseBody
   public String index() {
@@ -23,29 +27,29 @@ public class MainController {
   @ResponseBody
   public String showGet() {
     return """
-           <form method="POST" action="/page2">
-              <input type="number" name="age" placeholder="나이 입력" />
-              <input type="submit" value="page2로 POST 방식으로 이동" />
-           </form>
-           """;
+        <form method="POST" action="/page2">
+           <input type="number" name="age" placeholder="나이 입력" />
+           <input type="submit" value="page2로 POST 방식으로 이동" />
+        </form>
+        """;
   }
 
   @PostMapping("/page2")
   @ResponseBody
   public String showPage2Post(@RequestParam(defaultValue = "0") int age) {
     return """
-           <h1>입력된 나이 : %d</h1>
-           <h1>안녕하세요. POST 방식으로 오신걸 환영합니다.</h1>
-           """.formatted(age);
+        <h1>입력된 나이 : %d</h1>
+        <h1>안녕하세요. POST 방식으로 오신걸 환영합니다.</h1>
+        """.formatted(age);
   }
 
   @GetMapping("/page2")
   @ResponseBody
   public String showPage2Get(@RequestParam(defaultValue = "0") int age) {
     return """
-           <h1>입력된 나이 : %d</h1>
-           <h1>안녕하세요. POST 방식으로 오신걸 환영합니다.</h1>
-           """.formatted(age);
+        <h1>입력된 나이 : %d</h1>
+        <h1>안녕하세요. POST 방식으로 오신걸 환영합니다.</h1>
+        """.formatted(age);
   }
 
   @GetMapping("/plus")
@@ -70,17 +74,17 @@ public class MainController {
   @GetMapping("/gugudan")
   @ResponseBody
   public String showIncrease(Integer dan, Integer limit) {
-    if(dan == null) {
+    if (dan == null) {
       dan = 9;
     }
 
-    if(limit == null) {
+    if (limit == null) {
       limit = 9;
     }
 
     Integer finalDan = dan;
     return IntStream.rangeClosed(1, limit)
-        .mapToObj(i -> "%d * %d =%d".formatted(finalDan, i, finalDan*i))
+        .mapToObj(i -> "%d * %d =%d".formatted(finalDan, i, finalDan * i))
         .collect(Collectors.joining("<br>\n"));
   }
 
@@ -92,21 +96,77 @@ public class MainController {
 
     resp.getWriter().append(a + b + "");
   } //서블릿 방식 Springboot방식비교
-/*
-  홍길동 =INFP
-  홍길순 =ENFP
-  임꺽정 =ESFJ
-  본인 =INFJ
- */
+
+  /*
+    홍길동 =INFP
+    홍길순 =ENFP
+    임꺽정 =ESFJ
+    본인 =INFJ
+   */
+//  @GetMapping("/mbti/{name}")
+//  @ResponseBody
+//  public String  mbti(@PathVariable String name) {
+//    return switch (name) {
+//      case "홍길동" -> "INFP";
+//      case "홍길순" -> "ENFP";
+//      case "임꺽정" -> "ESFJ";
+//      case "김청일" -> "INFJ";
+//      default -> "모름";
+//    }; //이런방식으로 사용가능
+//  }
   @GetMapping("/mbti/{name}")
   @ResponseBody
-  public String  mbti(@PathVariable String name) {
+  public String mbti(@PathVariable String name) {
     return switch (name) {
-      case "홍길동" -> "INFP";
-      case "홍길순" -> "ENFP";
+      case "홍길순" -> {
+        char j = 'J';
+        yield "IFN" + j;
+      }
       case "임꺽정" -> "ESFJ";
-      case "김청일" -> "INFJ";
+      case "홍길동, 김청일" -> "INFJ";
       default -> "모름";
-    }; //이런방식으로 사용가능
+    }; // yield = return 들어가면 헷갈려서 yield사용
+  }
+
+  @GetMapping("/saveSession/{name}/{value}")
+  @ResponseBody
+  public String saveSession(@PathVariable String name, @PathVariable String value, HttpServletRequest req) {
+    HttpSession session = req.getSession();
+
+    session.setAttribute(name, value);
+
+    return "세션변수 %s의 값이 %s(으)로 설정되었습니다.".formatted(name, value);
+  }
+
+  @GetMapping("/getSession/{name}")
+  @ResponseBody
+  public String getSession(@PathVariable String name, HttpSession session) {
+    //HttpSession session = req.getSession();
+
+    // req => 쿠키 => JSESSIONID => 세션을 얻을 수 있다.
+    String value = (String)session.getAttribute(name);
+
+    return "세션변수 %s의 값이 %s 입니다.".formatted(name, value);
+  }
+
+  @GetMapping("/addArticle")
+  @ResponseBody
+  public String addArticle(String title, String body) {
+    Article article = new Article(title, body);
+
+    return "%d번 게시물이 생성되었습니다.".formatted(article.getId());
+  }
+}
+
+@AllArgsConstructor
+class Article {
+  private  static  int lastId = 0;
+  @Getter
+  private final int id;
+  private final String title;
+  private final String body;
+
+  public  Article(String title, String body) {
+    this(++lastId, title, body);
   }
 }
